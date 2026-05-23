@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroMap | Advanced Interactive Navigation Dashboard</title>
+  
+  <!-- Modern Premium Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Leaflet Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Left Navigation/Control Panel (Glassmorphic Sidebar) -->
+    <aside class="sidebar-panel" id="sidebar">
+      <!-- Brand Header -->
+      <header class="brand-header">
+        <div class="brand-logo">
+          <div class="logo-orb"></div>
+          <h1>Aero<span>Map</span></h1>
+        </div>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Toggle Sidebar">
+          <i data-lucide="chevron-left"></i>
+        </button>
+      </header>
+
+      <!-- Sidebar Tabs Navigation -->
+      <nav class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="search" title="Search Locations">
+          <i data-lucide="search"></i>
+          <span>Search</span>
+        </button>
+        <button class="tab-btn" data-tab="navigation" id="tab-nav-btn" title="Route & Navigation">
+          <i data-lucide="milestone"></i>
+          <span>Routes</span>
+        </button>
+        <button class="tab-btn" data-tab="favorites" title="Saved Places">
+          <i data-lucide="bookmark-check"></i>
+          <span>Favorites</span>
+        </button>
+        <button class="tab-btn" data-tab="settings" title="Settings">
+          <i data-lucide="sliders"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-container">
+        
+        <!-- Tab 1: Smart Search -->
+        <section class="tab-pane active" id="tab-search">
+          <div class="search-box-wrapper">
+            <div class="input-glow-group">
+              <i data-lucide="search" class="input-icon"></i>
+              <input type="text" id="search-input" placeholder="Search any city, landmark, address..." autocomplete="off" />
+              <button class="search-go-btn" id="search-go-btn" title="Search">
+                <i data-lucide="arrow-right"></i>
+              </button>
+              <button class="voice-search-btn" id="voice-search-btn" title="Voice Search">
+                <i data-lucide="mic"></i>
+              </button>
+              <button class="clear-input-btn" id="clear-search-btn" style="display:none;" title="Clear">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            
+            <!-- Live Suggestions Dropdown -->
+            <div class="suggestions-dropdown" id="search-suggestions" style="display:none;"></div>
+          </div>
+
+          <!-- Quick Action Shortcuts -->
+          <div class="quick-shortcuts">
+            <button class="shortcut-chip" data-query="Restaurant">
+              <i data-lucide="utensils"></i> Restaurants
+            </button>
+            <button class="shortcut-chip" data-query="Gas Station">
+              <i data-lucide="fuel"></i> Fuel
+            </button>
+            <button class="shortcut-chip" data-query="Hotel">
+              <i data-lucide="hotel"></i> Hotels
+            </button>
+            <button class="shortcut-chip" data-query="Hospital">
+              <i data-lucide="activity"></i> Hospitals
+            </button>
+          </div>
+
+          <!-- Recent Searches List -->
+          <div class="section-container recent-searches-section">
+            <div class="section-title">
+              <h3>Recent Searches</h3>
+              <button class="text-link-btn" id="clear-recent-btn">Clear All</button>
+            </div>
+            <ul class="recent-list" id="recent-searches-list">
+              <li class="empty-state">No recent searches</li>
+            </ul>
+          </div>
+
+          <!-- Featured Explore Widget -->
+          <div class="section-container explore-widget">
+            <div class="widget-card-glow">
+              <i data-lucide="sparkles" class="widget-icon"></i>
+              <div class="widget-text">
+                <h4>AI Route Assistant</h4>
+                <p>Real-time traffic estimation algorithms are actively monitoring 4,892 local nodes.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 2: Navigation & Routing -->
+        <section class="tab-pane" id="tab-navigation">
+          <div class="routing-inputs">
+            <!-- Intercepting line graphic -->
+            <div class="route-line-decor">
+              <div class="decor-dot origin"></div>
+              <div class="decor-line"></div>
+              <div class="decor-dot dest"></div>
+            </div>
+            <div class="route-fields">
+              <div class="input-glow-group">
+                <input type="text" id="route-start" placeholder="Starting Point (or Live Location)" autocomplete="off" />
+                <button class="use-live-btn" id="set-start-live" title="Use Live Location">
+                  <i data-lucide="locate"></i>
+                </button>
+                <div class="suggestions-dropdown" id="start-suggestions" style="display:none;"></div>
+              </div>
+              <div class="input-glow-group">
+                <input type="text" id="route-end" placeholder="Choose Destination..." autocomplete="off" />
+                <div class="suggestions-dropdown" id="end-suggestions" style="display:none;"></div>
+              </div>
+            </div>
+            <button class="swap-locations-btn" id="swap-route-btn" title="Reverse Route">
+              <i data-lucide="arrow-up-down"></i>
+            </button>
+          </div>
+
+          <!-- Transit Modes -->
+          <div class="transit-modes">
+            <button class="mode-btn active" data-mode="driving" title="Driving">
+              <i data-lucide="car"></i>
+              <span>Drive</span>
+            </button>
+            <button class="mode-btn" data-mode="bicycling" title="Bicycling">
+              <i data-lucide="bike"></i>
+              <span>Bike</span>
+            </button>
+            <button class="mode-btn" data-mode="walking" title="Walking">
+              <i data-lucide="footprints"></i>
+              <span>Walk</span>
+            </button>
+          </div>
+
+          <!-- Route Calculations Panel -->
+          <div class="route-info-panel" id="route-info-panel" style="display:none;">
+            <div class="route-summary-header">
+              <div class="eta-box">
+                <span class="eta-time" id="route-eta">-- min</span>
+                <span class="eta-label" id="route-arrival-time">Arrival: --:--</span>
+              </div>
+              <div class="dist-box">
+                <span class="dist-value" id="route-distance">-- km</span>
+                <span class="traffic-status-pill badge-green" id="route-traffic-badge">Low Traffic</span>
+              </div>
+            </div>
+
+            <!-- Alternative Estimates -->
+            <div class="alternative-routes">
+              <div class="alt-route-item active" id="alt-route-fastest">
+                <span class="alt-label">Recommended Route</span>
+                <span class="alt-time" id="alt-time-fast">--</span>
+              </div>
+              <div class="alt-route-item" id="alt-route-eco">
+                <span class="alt-label">Eco Alternative</span>
+                <span class="alt-time" id="alt-time-eco">--</span>
+              </div>
+            </div>
+
+            <!-- Action: Start Navigation -->
+            <button class="primary-action-btn" id="start-nav-btn">
+              <i data-lucide="navigation-2"></i>
+              Start Navigation
+            </button>
+          </div>
+
+          <!-- Dynamic Turn-by-Turn Card Container -->
+          <div class="section-container turn-by-turn-section" id="directions-container" style="display:none;">
+            <div class="section-title">
+              <h3>Turn-by-Turn Directions</h3>
+            </div>
+            <div class="directions-list" id="directions-list"></div>
+          </div>
+
+          <!-- Empty Route Prompt -->
+          <div class="empty-route-prompt" id="empty-route-prompt">
+            <i data-lucide="map-pin" class="empty-icon"></i>
+            <p>Enter a start point and destination to compute the optimal route and live transit time estimations.</p>
+          </div>
+        </section>
+
+        <!-- Tab 3: Favorites & Saved Pins -->
+        <section class="tab-pane" id="tab-favorites">
+          <div class="section-container">
+            <div class="section-title">
+              <h3>Saved Places</h3>
+              <span class="item-count" id="favorites-count">0 items</span>
+            </div>
+            <div class="saved-places-list" id="saved-places-list">
+              <div class="empty-state">
+                <i data-lucide="bookmark" class="state-icon"></i>
+                <p>No saved places yet. Dropping map pins allows you to label and save your favorite locations.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 4: Advanced Settings -->
+        <section class="tab-pane" id="tab-settings">
+          <!-- Theme Settings -->
+          <div class="settings-group">
+            <h3>Visual Style</h3>
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">UI Color Scheme</span>
+                <span class="setting-desc">Switch dark and light aesthetics</span>
+              </div>
+              <div class="theme-switch-wrapper">
+                <button class="theme-btn active" id="theme-dark-btn" title="Dark Theme">
+                  <i data-lucide="moon"></i>
+                </button>
+                <button class="theme-btn" id="theme-light-btn" title="Light Theme">
+                  <i data-lucide="sun"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Map Style Choice -->
+          <div class="settings-group">
+            <h3>Map Tile Layer</h3>
+            <div class="map-tile-grid">
+              <button class="tile-choice-btn active" data-style="dark">
+                <div class="tile-preview tile-dark"></div>
+                <span>Dark Core</span>
+              </button>
+              <button class="tile-choice-btn" data-style="light">
+                <div class="tile-preview tile-light"></div>
+                <span>Light City</span>
+              </button>
+              <button class="tile-choice-btn" data-style="satellite">
+                <div class="tile-preview tile-satellite"></div>
+                <span>Satellite</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Navigation Settings -->
+          <div class="settings-group">
+            <h3>Navigation Settings</h3>
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Real-time Traffic Overlay</span>
+                <span class="setting-desc">Render dynamic traffic lines on the map</span>
+              </div>
+              <label class="switch-glow">
+                <input type="checkbox" id="settings-traffic-toggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Voice Directions Volume</span>
+                <span class="setting-desc">Read directions aloud with synthesis</span>
+              </div>
+              <div class="volume-slider-group">
+                <i data-lucide="volume-2" id="volume-icon"></i>
+                <input type="range" id="settings-voice-volume" min="0" max="1" step="0.1" value="0.8" />
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Measurement Metric</span>
+                <span class="setting-desc">Toggle distances unit</span>
+              </div>
+              <div class="metric-selector">
+                <button class="metric-btn active" data-unit="metric">KM</button>
+                <button class="metric-btn" data-unit="imperial">Miles</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info & Status -->
+          <div class="settings-footer">
+            <p>AeroMap Engine v2.4.0</p>
+            <p>&copy; 2026 Advanced Interactive Systems</p>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- Right Side Map Wrapper -->
+    <main class="map-view-wrapper">
+      
+      <!-- Live Map Canvas -->
+      <div id="map"></div>
+
+      <!-- Floating Top Status Bar -->
+      <div class="top-status-bar">
+        <div class="status-chip live-clock">
+          <i data-lucide="clock"></i>
+          <span id="live-time-display">00:00:00 AM</span>
+        </div>
+        <div class="status-chip node-tracker">
+          <div class="pulse-indicator"></div>
+          <span>Satellite Connection: Active</span>
+        </div>
+      </div>
+
+      <!-- Floating Action HUD on Map -->
+      <div class="map-floating-controls">
+        <!-- Interactive 3D Perspective Button -->
+        <button class="circle-hud-btn" id="map-3d-btn" title="Toggle 3D perspective Mode">
+          <span class="hud-3d-label">3D</span>
+        </button>
+
+        <!-- Distance Calculation Measure Toggle -->
+        <button class="circle-hud-btn" id="map-measure-btn" title="Measure Distance between points">
+          <i data-lucide="ruler"></i>
+        </button>
+
+        <!-- Current Location Trigger -->
+        <button class="circle-hud-btn" id="map-location-btn" title="Locate Current Position">
+          <i data-lucide="locate-fixed"></i>
+        </button>
+
+        <!-- Zoom Controls -->
+        <div class="zoom-hud-group">
+          <button class="zoom-btn" id="zoom-in-btn" title="Zoom In">
+            <i data-lucide="plus"></i>
+          </button>
+          <div class="zoom-divider"></div>
+          <button class="zoom-btn" id="zoom-out-btn" title="Zoom Out">
+            <i data-lucide="minus"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- HUD Active Pin Detail Tooltip / Modal (Dynamically Generated) -->
+      
+      <!-- Distance Measuring HUD Dashboard -->
+      <div class="measure-indicator-card glass" id="measure-hud" style="display: none;">
+        <div class="measure-hud-header">
+          <i data-lucide="ruler" class="hud-icon"></i>
+          <h4>Distance Calculator</h4>
+          <button class="close-hud-btn" id="close-measure-btn">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <p class="measure-hud-desc">Click consecutive spots on the map to calculate accumulated straight-line segment length.</p>
+        <div class="measure-hud-values">
+          <div class="measure-segment">
+            <span class="m-lbl">Total Distance:</span>
+            <span class="m-val" id="measure-total-val">0.00 km</span>
+          </div>
+          <div class="measure-segment">
+            <span class="m-lbl">Points Placed:</span>
+            <span class="m-val" id="measure-points-count">0</span>
+          </div>
+        </div>
+        <button class="reset-hud-btn" id="reset-measure-btn">
+          <i data-lucide="trash-2"></i> Clear Measurement
+        </button>
+      </div>
+
+      <!-- Simulated Navigation Live Active HUD -->
+      <div class="navigation-hud-dashboard glass" id="navigation-hud" style="display: none;">
+        <div class="nav-hud-top">
+          <!-- Compass Arrow -->
+          <div class="nav-compass-orb">
+            <div class="compass-ring"></div>
+            <i data-lucide="navigation" id="nav-compass-arrow"></i>
+          </div>
+          
+          <!-- Instructions & Text -->
+          <div class="nav-text-block">
+            <span class="nav-alert-instruction" id="nav-current-maneuver-instruction">Proceeding onto route</span>
+            <span class="nav-distance-alert" id="nav-next-step-distance">In 250 meters</span>
+          </div>
+
+          <!-- Live Speedometer -->
+          <div class="nav-speed-panel">
+            <span class="speed-val" id="nav-live-speed">0</span>
+            <span class="speed-unit" id="nav-speed-unit-lbl">KM/H</span>
+          </div>
+        </div>
+
+        <div class="nav-hud-progress">
+          <div class="progress-bar-rail">
+            <div class="progress-bar-fill" id="nav-progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="nav-hud-footer">
+            <div class="nav-footer-stats">
+              <span class="stat-time" id="nav-hud-time-rem">-- min remaining</span>
+              <span class="stat-meta" id="nav-hud-dist-rem">-- km | ETA: --:--</span>
+            </div>
+            <button class="nav-stop-action-btn" id="stop-nav-simulation-btn">
+              <i data-lucide="square"></i> End
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Custom Context Pin Editor Modal -->
+  <div class="modal-backdrop" id="pin-modal-backdrop" style="display:none;">
+    <div class="pin-editor-modal glass">
+      <div class="modal-header">
+        <i data-lucide="map-pin" class="modal-icon"></i>
+        <h3>Save Custom Location Pin</h3>
+        <button class="close-modal-btn" id="close-pin-modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-input-group">
+          <label for="pin-title">Location Title</label>
+          <input type="text" id="pin-title" placeholder="e.g. My Favorite Cafe, Project Site..." />
+        </div>
+        <div class="modal-input-group">
+          <label for="pin-notes">Description & Notes</label>
+          <textarea id="pin-notes" rows="3" placeholder="Add custom labels, access codes, parking info..."></textarea>
+        </div>
+        <div class="modal-input-group">
+          <label>Marker Pin Theme Accent</label>
+          <div class="pin-color-picker">
+            <button class="color-dot active" data-color="#14b8a6" style="background-color: #14b8a6;"></button>
+            <button class="color-dot" data-color="#6366f1" style="background-color: #6366f1;"></button>
+            <button class="color-dot" data-color="#f59e0b" style="background-color: #f59e0b;"></button>
+            <button class="color-dot" data-color="#ef4444" style="background-color: #ef4444;"></button>
+            <button class="color-dot" data-color="#10b981" style="background-color: #10b981;"></button>
+            <button class="color-dot" data-color="#ec4899" style="background-color: #ec4899;"></button>
+          </div>
+        </div>
+        <input type="hidden" id="pin-lat" />
+        <input type="hidden" id="pin-lng" />
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="cancel-pin-modal">Cancel</button>
+        <button class="primary-btn" id="save-pin-modal">
+          <i data-lucide="save"></i> Save Pin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet Geocoder Plugin -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  
+  <!-- Custom Core Application JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
